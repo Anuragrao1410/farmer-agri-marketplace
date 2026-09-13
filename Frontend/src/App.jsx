@@ -15,7 +15,7 @@ function App() {
 
   // Fetch products from backend
   useEffect(() => {
-    fetch("http://localhost:5000/api/products")
+    fetch("https://farmer-agri-marketplace.onrender.com/api/products")
       .then((response) => response.json())
       .then((data) => {
         setProducts(data);
@@ -26,14 +26,14 @@ function App() {
   }, []);
   
   useEffect(() => {
-  fetch("http://localhost:5000/api/farmers")
+  fetch("https://farmer-agri-marketplace.onrender.com/api/farmers")
     .then((response) => response.json())
     .then((data) => setFarmers(data))
     .catch((error) => console.log("Error fetching farmers:", error));
 }, []);
 
 useEffect(() => {
-  fetch("http://localhost:5000/api/farmers")
+  fetch("https://farmer-agri-marketplace.onrender.com/api/farmers")
     .then((response) => response.json())
     .then((data) => setFarmers(data))
     .catch((error) => console.log("Error fetching farmers:", error));
@@ -45,7 +45,7 @@ useEffect(() => {
     return;
   }
 
-  fetch(`http://localhost:5000/api/orders/farmer/${user.id}`)
+  fetch(`https://farmer-agri-marketplace.onrender.com/api/orders/farmer/${user.id}`)
     .then((response) => response.json())
     .then((data) => {
       if (!Array.isArray(data)) {
@@ -67,7 +67,7 @@ useEffect(() => {
     return;
   }
 
-  fetch(`http://localhost:5000/api/orders/buyer/${user.id}`)
+  fetch(`https://farmer-agri-marketplace.onrender.com/api/orders/buyer/${user.id}`)
     .then((response) => response.json())
     .then((data) => {
       setOrders(data);
@@ -86,7 +86,7 @@ useEffect(() => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/users/login",
+        "https://farmer-agri-marketplace.onrender.com/api/users/login",
         {
           method: "POST",
           headers: {
@@ -129,7 +129,7 @@ useEffect(() => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/users/register",
+        "https://farmer-agri-marketplace.onrender.com/api/users/register",
         {
           method: "POST",
           headers: {
@@ -177,7 +177,7 @@ const handleAddProduct = async (event) => {
 
   try {
     const response = await fetch(
-      "http://localhost:5000/api/products",
+      "https://farmer-agri-marketplace.onrender.com/api/products",
       {
         method: "POST",
         headers: {
@@ -206,7 +206,7 @@ body: JSON.stringify({
     alert("Product added successfully!");
 
 const productsResponse = await fetch(
-  "http://localhost:5000/api/products"
+  "https://farmer-agri-marketplace.onrender.com/api/products"
 );
 
 const productsData = await productsResponse.json();
@@ -238,7 +238,7 @@ const handleBuyNow = async (product) => {
 
   try {
     const response = await fetch(
-      "http://localhost:5000/api/orders",
+      "https://farmer-agri-marketplace.onrender.com/api/orders",
       {
         method: "POST",
         headers: {
@@ -265,7 +265,7 @@ const handleBuyNow = async (product) => {
     );
     if (user) {
   const ordersResponse = await fetch(
-    `http://localhost:5000/api/orders/buyer/${user.id}`
+    `https://farmer-agri-marketplace.onrender.com/api/orders/buyer/${user.id}`
   );
 
   const ordersData = await ordersResponse.json();
@@ -297,7 +297,7 @@ const handleEditProduct = async (product) => {
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/products/${product._id}`,
+      `https://farmer-agri-marketplace.onrender.com/api/products/${product._id}`,
       {
         method: "PUT",
         headers: {
@@ -352,7 +352,7 @@ const handleDeleteProduct = async (productId) => {
 
   try {
     const response = await fetch(
-      `http://localhost:5000/api/products/${productId}`,
+      `https://farmer-agri-marketplace.onrender.com/api/products/${productId}`,
       {
        method: "DELETE",
 headers: {
@@ -389,7 +389,7 @@ body: JSON.stringify({
 const handleUpdateOrderStatus = async (orderId, status) => {
   try {
     const response = await fetch(
-      `http://localhost:5000/api/orders/${orderId}`,
+      `https://farmer-agri-marketplace.onrender.com/api/orders/${orderId}`,
       {
         method: "PUT",
         headers: {
