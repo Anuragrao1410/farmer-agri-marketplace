@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
+  const API_URL = "https://farmer-agri-marketplace.onrender.com";
+
   const [products, setProducts] = useState([]);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -15,67 +17,89 @@ function App() {
 
   // Fetch products from backend
   useEffect(() => {
-    fetch("https://farmer-agri-marketplace.onrender.com/api/products")
+    fetch(`${API_URL}/api/products`)
       .then((response) => response.json())
       .then((data) => {
+        if (!Array.isArray(data)) {
+          console.log("Products API error:", data);
+          setProducts([]);
+          return;
+        }
+
         setProducts(data);
       })
       .catch((error) => {
         console.log("Error fetching products:", error);
+        setProducts([]);
       });
   }, []);
-  
+
+  // Fetch farmers from backend
   useEffect(() => {
-  fetch("https://farmer-agri-marketplace.onrender.com/api/farmers")
-    .then((response) => response.json())
-    .then((data) => setFarmers(data))
-    .catch((error) => console.log("Error fetching farmers:", error));
-}, []);
+    fetch(`${API_URL}/api/farmers`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          console.log("Farmers API error:", data);
+          setFarmers([]);
+          return;
+        }
 
-useEffect(() => {
-  fetch("https://farmer-agri-marketplace.onrender.com/api/farmers")
-    .then((response) => response.json())
-    .then((data) => setFarmers(data))
-    .catch((error) => console.log("Error fetching farmers:", error));
-}, []);
+        setFarmers(data);
+      })
+      .catch((error) => {
+        console.log("Error fetching farmers:", error);
+        setFarmers([]);
+      });
+  }, []);
 
- useEffect(() => {
-  if (!user || user.role !== "farmer") {
-    setFarmerOrders([]);
-    return;
-  }
-
-  fetch(`https://farmer-agri-marketplace.onrender.com/api/orders/farmer/${user.id}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (!Array.isArray(data)) {
-        console.log("Farmer orders error:", data);
-        setFarmerOrders([]);
-        return;
-      }
-
-      setFarmerOrders(data);
-    })
-    .catch((error) => {
-      console.log("Error fetching farmer orders:", error);
+  // Fetch farmer orders
+  useEffect(() => {
+    if (!user || user.role !== "farmer") {
       setFarmerOrders([]);
-    });
-}, [user]);
-  useEffect(() => {
-  if (!user) {
-    setOrders([]);
-    return;
-  }
+      return;
+    }
 
-  fetch(`https://farmer-agri-marketplace.onrender.com/api/orders/buyer/${user.id}`)
-    .then((response) => response.json())
-    .then((data) => {
-      setOrders(data);
-    })
-    .catch((error) => {
-      console.log("Error fetching orders:", error);
-    });
-}, [user]);
+    fetch(`${API_URL}/api/orders/farmer/${user.id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          console.log("Farmer orders error:", data);
+          setFarmerOrders([]);
+          return;
+        }
+
+        setFarmerOrders(data);
+      })
+      .catch((error) => {
+        console.log("Error fetching farmer orders:", error);
+        setFarmerOrders([]);
+      });
+  }, [user]);
+
+  // Fetch buyer orders
+  useEffect(() => {
+    if (!user) {
+      setOrders([]);
+      return;
+    }
+
+    fetch(`${API_URL}/api/orders/buyer/${user.id}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          console.log("Buyer orders error:", data);
+          setOrders([]);
+          return;
+        }
+
+        setOrders(data);
+      })
+      .catch((error) => {
+        console.log("Error fetching orders:", error);
+        setOrders([]);
+      });
+  }, [user]);
 
   // Login function
   const handleLogin = async (event) => {
@@ -85,19 +109,16 @@ useEffect(() => {
     const password = event.target.password.value;
 
     try {
-      const response = await fetch(
-        "https://farmer-agri-marketplace.onrender.com/api/users/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/users/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
       const data = await response.json();
 
@@ -128,24 +149,20 @@ useEffect(() => {
     const address = event.target.address.value;
 
     try {
-      const response = await fetch(
-        "https://farmer-agri-marketplace.onrender.com/api/users/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-         body: JSON.stringify({
-         name,
-         email,
-         password,
-         role,
-         phone,
-         address
-
-          }),
-        }
-      );
+      const response = await fetch(`${API_URL}/api/users/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role,
+          phone,
+          address,
+        }),
+      });
 
       const data = await response.json();
 
@@ -163,83 +180,84 @@ useEffect(() => {
       alert("Server se connection nahi ho pa raha.");
     }
   };
-  
-// Create order function
-const handleAddProduct = async (event) => {
-  event.preventDefault();
 
-  const name = event.target.name.value;
-  const category = event.target.category.value;
-  const price = Number(event.target.price.value);
-  const quantity = Number(event.target.quantity.value);
-  const unit = event.target.unit.value;
-  const description = event.target.description.value;
+  // Add product function
+  const handleAddProduct = async (event) => {
+    event.preventDefault();
 
-  try {
-    const response = await fetch(
-      "https://farmer-agri-marketplace.onrender.com/api/products",
-      {
+    if (!user || user.role !== "farmer") {
+      alert("Only farmers can add products.");
+      return;
+    }
+
+    const name = event.target.name.value;
+    const category = event.target.category.value;
+    const price = Number(event.target.price.value);
+    const quantity = Number(event.target.quantity.value);
+    const unit = event.target.unit.value;
+    const description = event.target.description.value;
+
+    try {
+      const response = await fetch(`${API_URL}/api/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-body: JSON.stringify({
-  name,
-  category,
-  price,
-  quantity,
-  unit,
-  description,
-  farmer: user.farmerId,
-}),
-      
+        body: JSON.stringify({
+          name,
+          category,
+          price,
+          quantity,
+          unit,
+          description,
+          farmer: user.farmerId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Product add failed");
+        return;
       }
-    );
 
-    const data = await response.json();
+      alert("Product added successfully!");
 
-    if (!response.ok) {
-    `${data.message || "Product add failed"}\n${data.error || ""}`
+      // Refresh products
+      const productsResponse = await fetch(`${API_URL}/api/products`);
+      const productsData = await productsResponse.json();
+
+      if (Array.isArray(productsData)) {
+        setProducts(productsData);
+      } else {
+        console.log("Products refresh error:", productsData);
+      }
+
+      setShowAddProduct(false);
+    } catch (error) {
+      console.log("Add product error:", error);
+      alert("Server se connection nahi ho pa raha.");
+    }
+  };
+
+  // Buy product
+  const handleBuyNow = async (product) => {
+    if (!user) {
+      alert("Please login first.");
+      setShowLogin(true);
       return;
     }
 
-    alert("Product added successfully!");
+    const quantity = prompt(`Enter quantity for ${product.name}:`);
 
-const productsResponse = await fetch(
-  "https://farmer-agri-marketplace.onrender.com/api/products"
-);
+    if (!quantity || Number(quantity) <= 0) {
+      return;
+    }
 
-const productsData = await productsResponse.json();
+    const totalPrice = Number(quantity) * product.price;
 
-setProducts(productsData);
-
-setShowAddProduct(false);
-  } catch (error) {
-    console.log("Add product error:", error);
-    alert("Server se connection nahi ho pa raha.");
-  }
-};
-const handleBuyNow = async (product) => {
-  if (!user) {
-    alert("Please login first.");
-    setShowLogin(true);
-    return;
-  }
-
-  const quantity = prompt(
-    `Enter quantity for ${product.name}:`
-  );
-
-  if (!quantity || Number(quantity) <= 0) {
-    return;
-  }
-
-  const totalPrice = Number(quantity) * product.price;
-
-  try {
-    const response = await fetch(
-      "https://farmer-agri-marketplace.onrender.com/api/orders",
-      {
+    try {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -250,189 +268,219 @@ const handleBuyNow = async (product) => {
           quantity: Number(quantity),
           totalPrice: totalPrice,
         }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Order failed");
+        return;
       }
+
+      alert(`Order placed successfully! Total: ₹${totalPrice}`);
+
+      // Refresh buyer orders
+      const ordersResponse = await fetch(
+        `${API_URL}/api/orders/buyer/${user.id}`
+      );
+
+      const ordersData = await ordersResponse.json();
+
+      if (Array.isArray(ordersData)) {
+        setOrders(ordersData);
+      } else {
+        console.log("Buyer orders refresh error:", ordersData);
+        setOrders([]);
+      }
+    } catch (error) {
+      console.log("Order error:", error);
+      alert("Server se connection nahi ho pa raha.");
+    }
+  };
+
+  // Edit product
+  const handleEditProduct = async (product) => {
+    const name = prompt("Product name:", product.name);
+
+    if (!name) return;
+
+    const price = prompt("Price:", product.price);
+
+    if (!price) return;
+
+    const quantity = prompt("Quantity:", product.quantity);
+
+    if (!quantity) return;
+
+    const description = prompt(
+      "Description:",
+      product.description || ""
     );
 
-    const data = await response.json();
+    try {
+      const response = await fetch(
+        `${API_URL}/api/products/${product._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            price: Number(price),
+            quantity: Number(quantity),
+            description,
+            farmerId: user.farmerId,
+          }),
+        }
+      );
 
-    if (!response.ok) {
-      alert(data.message || "Order failed");
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Failed to update product");
+        return;
+      }
+
+      alert("Product updated successfully!");
+
+      setProducts((previousProducts) =>
+        Array.isArray(previousProducts)
+          ? previousProducts.map((item) =>
+              item._id === product._id
+                ? {
+                    ...item,
+                    ...data.product,
+                    farmer: item.farmer,
+                  }
+                : item
+            )
+          : []
+      );
+    } catch (error) {
+      console.log("Edit product error:", error);
+      alert("Server se connection nahi ho pa raha.");
+    }
+  };
+
+  // Delete product
+  const handleDeleteProduct = async (productId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmDelete) {
       return;
     }
 
-    alert(
-      `Order placed successfully! Total: ₹${totalPrice}`
-    );
-    if (user) {
-  const ordersResponse = await fetch(
-    `https://farmer-agri-marketplace.onrender.com/api/orders/buyer/${user.id}`
-  );
+    try {
+      const response = await fetch(
+        `${API_URL}/api/products/${productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            farmerId: user.farmerId,
+          }),
+        }
+      );
 
-  const ordersData = await ordersResponse.json();
+      const data = await response.json();
 
-  if (Array.isArray(ordersData)) {
-    setOrders(ordersData);
-  }
-}
-  } catch (error) {
-    console.log("Order error:", error);
-    alert("Server se connection nahi ho pa raha.");
-  }
-};
-
-const handleEditProduct = async (product) => {
-  const name = prompt("Product name:", product.name);
-  if (!name) return;
-
-  const price = prompt("Price:", product.price);
-  if (!price) return;
-
-  const quantity = prompt("Quantity:", product.quantity);
-  if (!quantity) return;
-
-  const description = prompt(
-    "Description:",
-    product.description || ""
-  );
-
-  try {
-    const response = await fetch(
-      `https://farmer-agri-marketplace.onrender.com/api/products/${product._id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          price: Number(price),
-          quantity: Number(quantity),
-          description,
-          farmerId: user.farmerId,
-        }),
+      if (!response.ok) {
+        alert(data.message || "Failed to delete product");
+        return;
       }
-    );
 
-    const data = await response.json();
+      alert("Product deleted successfully!");
 
-    if (!response.ok) {
-      alert(data.message || "Failed to update product");
-      return;
+      setProducts((previousProducts) =>
+        Array.isArray(previousProducts)
+          ? previousProducts.filter(
+              (product) => product._id !== productId
+            )
+          : []
+      );
+    } catch (error) {
+      console.log("Delete product error:", error);
+      alert("Server se connection nahi ho pa raha.");
     }
+  };
 
-    alert("Product updated successfully!");
+  // Update order status
+  const handleUpdateOrderStatus = async (orderId, status) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/orders/${orderId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: status,
+          }),
+        }
+      );
 
-    setProducts((previousProducts) =>
-      previousProducts.map((item) =>
-        item._id === product._id
-          ? {
-              ...item,
-              ...data.product,
-              farmer: item.farmer,
-            }
-          : item
-      )
-    );
+      const data = await response.json();
 
-  } catch (error) {
-    console.log("Edit product error:", error);
-    alert("Server se connection nahi ho pa raha.");
-  }
-};
-
-
-const handleDeleteProduct = async (productId) => {
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this product?"
-  );
-
-  if (!confirmDelete) {
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `https://farmer-agri-marketplace.onrender.com/api/products/${productId}`,
-      {
-       method: "DELETE",
-headers: {
-  "Content-Type": "application/json",
-},
-body: JSON.stringify({
-  farmerId: user.farmerId,
-}),
+      if (!response.ok) {
+        alert(data.message || "Failed to update order");
+        return;
       }
-    );
 
-    const data = await response.json();
+      alert(`Order status updated to ${status}`);
 
-    if (!response.ok) {
-      alert(data.message || "Failed to delete product");
-      return;
-    }
+      setFarmerOrders((previousOrders) =>
+        Array.isArray(previousOrders)
+          ? previousOrders.map((order) =>
+              order._id === orderId
+                ? { ...order, status: status }
+                : order
+            )
+          : []
+      );
 
-    alert("Product deleted successfully!");
+      // Refresh buyer orders also
+      if (user) {
+        const ordersResponse = await fetch(
+          `${API_URL}/api/orders/buyer/${user.id}`
+        );
 
-    setProducts((previousProducts) =>
-      previousProducts.filter(
-        (product) => product._id !== productId
-      )
-    );
+        const ordersData = await ordersResponse.json();
 
-  } catch (error) {
-    console.log("Delete product error:", error);
-    alert("Server se connection nahi ho pa raha.");
-  }
-};
-
-// Update order status
-const handleUpdateOrderStatus = async (orderId, status) => {
-  try {
-    const response = await fetch(
-      `https://farmer-agri-marketplace.onrender.com/api/orders/${orderId}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: status,
-        }),
+        if (Array.isArray(ordersData)) {
+          setOrders(ordersData);
+        }
       }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Failed to update order");
-      return;
+    } catch (error) {
+      console.log("Update order error:", error);
+      alert("Server se connection nahi ho pa raha.");
     }
+  };
 
-    alert(`Order status updated to ${status}`);
+  // Safe product filtering
+  const safeProducts = Array.isArray(products) ? products : [];
 
-    setFarmerOrders((previousOrders) =>
-      previousOrders.map((order) =>
-        order._id === orderId
-          ? { ...order, status: status }
-          : order
-      )
-    );
+  const filteredProducts = safeProducts.filter((product) => {
+    const productName = product.name || "";
+    const productCategory = product.category || "";
 
-  } catch (error) {
-    console.log("Update order error:", error);
-    alert("Server se connection nahi ho pa raha.");
-  }
-};const filteredProducts = products.filter((product) => {
-  const matchesName = product.name
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase());
+    const matchesName = productName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
-  const matchesCategory =
-    selectedCategory === "" ||
-    product.category.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesCategory =
+      selectedCategory === "" ||
+      productCategory.toLowerCase() ===
+        selectedCategory.toLowerCase();
 
-  return matchesName && matchesCategory;
-});
+    return matchesName && matchesCategory;
+  });
+
   return (
     <>
       {/* Login Popup */}
@@ -449,9 +497,7 @@ const handleUpdateOrderStatus = async (orderId, status) => {
 
             <h2>Welcome Back</h2>
 
-            <p>
-              Login to your AgriMarket account
-            </p>
+            <p>Login to your AgriMarket account</p>
 
             <form onSubmit={handleLogin}>
               <label>Email</label>
@@ -482,7 +528,6 @@ const handleUpdateOrderStatus = async (orderId, status) => {
 
             <p className="auth-switch">
               Don't have an account?{" "}
-
               <button
                 type="button"
                 onClick={() => {
@@ -511,9 +556,7 @@ const handleUpdateOrderStatus = async (orderId, status) => {
 
             <h2>Create Account</h2>
 
-            <p>
-              Join AgriMarket today
-            </p>
+            <p>Join AgriMarket today</p>
 
             <form onSubmit={handleRegister}>
               <label>Name</label>
@@ -533,21 +576,25 @@ const handleUpdateOrderStatus = async (orderId, status) => {
                 placeholder="Enter your email"
                 required
               />
-<label>Phone</label>
-<input
-  type="tel"
-  name="phone"
-  placeholder="Enter your phone number"
-  required
-/>
 
-<label>Address</label>
-<input
-  type="text"
-  name="address"
-  placeholder="Enter your address"
-  required
-/>
+              <label>Phone</label>
+
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Enter your phone number"
+                required
+              />
+
+              <label>Address</label>
+
+              <input
+                type="text"
+                name="address"
+                placeholder="Enter your address"
+                required
+              />
+
               <label>Password</label>
 
               <input
@@ -563,13 +610,9 @@ const handleUpdateOrderStatus = async (orderId, status) => {
                 name="role"
                 defaultValue="buyer"
               >
-                <option value="buyer">
-                  Buyer
-                </option>
+                <option value="buyer">Buyer</option>
 
-                <option value="farmer">
-                  Farmer
-                </option>
+                <option value="farmer">Farmer</option>
               </select>
 
               <button
@@ -582,7 +625,6 @@ const handleUpdateOrderStatus = async (orderId, status) => {
 
             <p className="auth-switch">
               Already have an account?{" "}
-
               <button
                 type="button"
                 onClick={() => {
@@ -601,61 +643,66 @@ const handleUpdateOrderStatus = async (orderId, status) => {
 
         {/* Navbar */}
         <nav className="navbar">
+          <div className="logo">
+            🌾 Agri<span>Market</span>
+          </div>
 
-  <div className="logo">
-    🌾 Agri<span>Market</span>
-  </div>
+          <div className="nav-links">
+            <a href="#home">Home</a>
 
-  <div className="nav-links">
-    <a href="#home">Home</a>
-    <a href="#products">Products</a>
-    <a href="#farmers">Farmers</a>
-    <a href="#orders">Orders</a>
-  </div>
+            <a href="#products">Products</a>
 
-  <div className="nav-buttons">
-    {user ? (
-      <>
-        <span className="user-name">
-          👤 {user.name}
-        </span>
+            <a href="#farmers">Farmers</a>
 
-        <button
-          className="login-btn"
-          onClick={() => setUser(null)}
-        >
-          Logout
-        </button>
-      </>
-    ) : (
-      <>
-        <button
-          className="login-btn"
-          onClick={() => {
-            setShowLogin(true);
-            setShowRegister(false);
-          }}
-        >
-          Login
-        </button>
+            <a href="#orders">Orders</a>
+          </div>
 
-        <button
-          className="register-btn"
-          onClick={() => {
-            setShowRegister(true);
-            setShowLogin(false);
-          }}
-        >
-          Register
-        </button>
-      </>
-    )}
-  </div>
+          <div className="nav-buttons">
+            {user ? (
+              <>
+                <span className="user-name">
+                  👤 {user.name}
+                </span>
 
-</nav>
+                <button
+                  className="login-btn"
+                  onClick={() => {
+                    setUser(null);
+                    setOrders([]);
+                    setFarmerOrders([]);
+                  }}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="login-btn"
+                  onClick={() => {
+                    setShowLogin(true);
+                    setShowRegister(false);
+                  }}
+                >
+                  Login
+                </button>
+
+                <button
+                  className="register-btn"
+                  onClick={() => {
+                    setShowRegister(true);
+                    setShowLogin(false);
+                  }}
+                >
+                  Register
+                </button>
+              </>
+            )}
+          </div>
+        </nav>
 
         {/* Hero Section */}
-      <section className="hero" id="home">
+        <section className="hero" id="home">
           <div className="hero-content">
             <p className="tagline">
               🌱 Fresh From The Farm
@@ -664,6 +711,7 @@ const handleUpdateOrderStatus = async (orderId, status) => {
             <h1>
               Fresh Products.
               <br />
+
               <span>
                 Direct From Farmers.
               </span>
@@ -676,11 +724,23 @@ const handleUpdateOrderStatus = async (orderId, status) => {
             </p>
 
             <div className="hero-buttons">
-              <button className="shop-btn">
+              <button
+                className="shop-btn"
+                onClick={() =>
+                  document
+                    .getElementById("products")
+                    ?.scrollIntoView({
+                      behavior: "smooth",
+                    })
+                }
+              >
                 Shop Products →
               </button>
 
-              <button className="farmer-btn">
+              <button
+                className="farmer-btn"
+                onClick={() => setShowRegister(true)}
+              >
                 Become a Farmer
               </button>
             </div>
@@ -762,56 +822,97 @@ const handleUpdateOrderStatus = async (orderId, status) => {
             </div>
           </div>
         </section>
-<section className="farmers" id="farmers">
-  <div className="section-heading">
-    <div>
-      <h2>Our Farmers</h2>
-      <p>Meet the farmers bringing fresh products directly to you</p>
-    </div>
-  </div>
 
-<div className="farmer-grid">
-  {farmers.length > 0 ? (
-    farmers.map((farmer) => (
-      <div className="farmer-card" key={farmer._id}>
-        <div className="farmer-icon">👨‍🌾</div>
+        {/* Farmers */}
+        <section
+          className="farmers"
+          id="farmers"
+        >
+          <div className="section-heading">
+            <div>
+              <h2>Our Farmers</h2>
 
-        <h3>{farmer.name}</h3>
+              <p>
+                Meet the farmers bringing fresh
+                products directly to you
+              </p>
+            </div>
+          </div>
 
-        <p>{farmer.address}</p>
+          <div className="farmer-grid">
+            {farmers.length > 0 ? (
+              farmers.map((farmer) => (
+                <div
+                  className="farmer-card"
+                  key={farmer._id}
+                >
+                  <div className="farmer-icon">
+                    👨‍🌾
+                  </div>
 
-        <span>{farmer.email}</span>
-      </div>
-    ))
-  ) : (
-    <p>No farmers available</p>
-  )}
-</div>
-</section>
+                  <h3>
+                    {farmer.name}
+                  </h3>
 
+                  <p>
+                    {farmer.address}
+                  </p>
+
+                  <span>
+                    {farmer.email}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p>
+                No farmers available
+              </p>
+            )}
+          </div>
+        </section>
 
         {/* Products */}
-       <section className="products" id="products">
-
+        <section
+          className="products"
+          id="products"
+        >
           <div className="product-filters">
-  <input
-    type="text"
-    placeholder="Search products..."
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) =>
+                setSearchTerm(e.target.value)
+              }
+            />
 
-  <select
-    value={selectedCategory}
-    onChange={(e) => setSelectedCategory(e.target.value)}
-  >
-    <option value="">All Categories</option>
-    <option value="vegetables">Vegetables</option>
-    <option value="fruits">Fruits</option>
-    <option value="grains">Grains</option>
-    <option value="dairy">Dairy</option>
-  </select>
-</div>
+            <select
+              value={selectedCategory}
+              onChange={(e) =>
+                setSelectedCategory(e.target.value)
+              }
+            >
+              <option value="">
+                All Categories
+              </option>
+
+              <option value="vegetables">
+                Vegetables
+              </option>
+
+              <option value="fruits">
+                Fruits
+              </option>
+
+              <option value="grains">
+                Grains
+              </option>
+
+              <option value="dairy">
+                Dairy
+              </option>
+            </select>
+          </div>
 
           <div className="section-heading">
             <div>
@@ -824,261 +925,367 @@ const handleUpdateOrderStatus = async (orderId, status) => {
               </p>
             </div>
 
-            <button className="view-btn">
+            <button
+              className="view-btn"
+              onClick={() =>
+                document
+                  .getElementById("products")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                  })
+              }
+            >
               View All →
             </button>
           </div>
 
-        <div className="product-grid">
+          <div className="product-grid">
+            {safeProducts.length > 0 ? (
+              filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <div
+                    className="product-card"
+                    key={product._id}
+                  >
+                    <div className="product-image">
+                      🌱
+                    </div>
 
-  {products.length > 0 ? (
+                    <h3>
+                      {product.name}
+                    </h3>
 
-    filteredProducts.length > 0 ? (
+                    <p>
+                      From{" "}
+                      {product.farmer?.name ||
+                        "Local Farmer"}
+                    </p>
 
-      filteredProducts.map((product) => (
-                <div
-                  className="product-card"
-                  key={product._id}
-                >
-                  <div className="product-image">
-                    🌱
+                    <div className="product-bottom">
+                      <strong>
+                        ₹{product.price} /{" "}
+                        {product.unit}
+                      </strong>
+
+                      <button
+                        onClick={() =>
+                          handleBuyNow(product)
+                        }
+                      >
+                        Buy Now
+                      </button>
+
+                      {user &&
+                        user.role === "farmer" && (
+                          <>
+                            <button
+                              type="button"
+                              className="edit-product-btn"
+                              onClick={() =>
+                                handleEditProduct(product)
+                              }
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              className="delete-product-btn"
+                              onClick={() =>
+                                handleDeleteProduct(
+                                  product._id
+                                )
+                              }
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                    </div>
                   </div>
-
-                  <h3>
-                    {product.name}
-                  </h3>
-
-                  <p>
-                    From{" "}
-                    {product.farmer?.name ||
-                      "Local Farmer"}
-                  </p>
-
-                 <div className="product-bottom">
-                 <strong>₹{product.price} / {product.unit}</strong>
-
-                 <button onClick={() => handleBuyNow(product)}>
-                  Buy Now
-                </button>
-
-           {user && user.role === "farmer" && (
-  <>
-    <button
-      type="button"
-      className="edit-product-btn"
-      onClick={() => handleEditProduct(product)}
-    >
-      Edit
-    </button>
-
-    <button
-      type="button"
-      className="delete-product-btn"
-      onClick={() => handleDeleteProduct(product._id)}
-    >
-      Delete
-    </button>
-  </>
-)}
-         
-         </div>
-                </div>
-                    ))
-    ) : (
-      <p>No products found.</p>
-    )
-
-  ) : (
-    <p>Loading products...</p>
-  )}
-            
+                ))
+              ) : (
+                <p>
+                  No products found.
+                </p>
+              )
+            ) : (
+              <p>
+                No products available.
+              </p>
+            )}
           </div>
         </section>
 
-         {/* Orders */}
-        <section className="orders" id="orders">
-
+        {/* Orders */}
+        <section
+          className="orders"
+          id="orders"
+        >
           <div className="section-heading">
             <div>
-              <h2>My Orders</h2>
-              <p>Track your recent orders</p>
+              <h2>
+                My Orders
+              </h2>
+
+              <p>
+                Track your recent orders
+              </p>
             </div>
           </div>
 
           {!user ? (
-            <p>Please login to view your orders.</p>
+            <p>
+              Please login to view your orders.
+            </p>
           ) : orders.length === 0 ? (
-            <p>No orders found.</p>
+            <p>
+              No orders found.
+            </p>
           ) : (
             <div className="orders-list">
-
               {orders.map((order) => (
-                <div className="order-card" key={order._id}>
-
+                <div
+                  className="order-card"
+                  key={order._id}
+                >
                   <h3>
-                    {order.product?.name || "Product"}
+                    {order.product?.name ||
+                      "Product"}
                   </h3>
 
                   <p>
-                    Quantity: {order.quantity}{" "}
+                    Quantity:{" "}
+                    {order.quantity}{" "}
                     {order.product?.unit || ""}
                   </p>
 
                   <p>
-                    Total Price: ₹{order.totalPrice}
+                    Total Price: ₹
+                    {order.totalPrice}
                   </p>
 
-                 <p className="order-status">
-                      Status:
-                      <span className={`status-badge ${order.status.toLowerCase()}`}>
-                           {order.status}
-                        </span>
-                      </p>
+                  <p className="order-status">
+                    Status:
+
+                    <span
+                      className={`status-badge ${
+                        order.status
+                          ? order.status.toLowerCase()
+                          : "pending"
+                      }`}
+                    >
+                      {order.status ||
+                        "Pending"}
+                    </span>
+                  </p>
                 </div>
               ))}
-
             </div>
           )}
-
         </section>
 
-{user && user.role === "farmer" && (
-  <section className="add-product-section">
+        {/* Add Product */}
+        {user &&
+          user.role === "farmer" && (
+            <section className="add-product-section">
+              <div className="section-heading">
+                <div>
+                  <h2>
+                    Add Product
+                  </h2>
 
-    <div className="section-heading">
-      <div>
-        <h2>Add Product</h2>
-        <p>Sell your fresh farm products</p>
-      </div>
-    </div>
+                  <p>
+                    Sell your fresh farm products
+                  </p>
+                </div>
+              </div>
 
-    <form className="product-form" onSubmit={handleAddProduct}>
-
-      <input
-        type="text"
-        name="name"
-        placeholder="Product name"
-        required
-      />
-
-      <select name="category" defaultValue="Vegetables" required>
-        <option value="Vegetables">Vegetables</option>
-        <option value="Fruits">Fruits</option>
-        <option value="Grains">Grains</option>
-        <option value="Dairy">Dairy</option>
-      </select>
-
-      <input
-        type="number"
-        name="price"
-        placeholder="Price"
-        min="1"
-        required
-      />
-
-      <input
-        type="number"
-        name="quantity"
-        placeholder="Quantity"
-        min="1"
-        required
-      />
-
-      <select name="unit" defaultValue="kg" required>
-        <option value="kg">kg</option>
-        <option value="quintal">Quintal</option>
-        <option value="liter">Liter</option>
-        <option value="piece">Piece</option>
-      </select>
-
-      <textarea
-        name="description"
-        placeholder="Product description"
-        required
-      ></textarea>
-
-      <button type="submit">
-        Add Product
-      </button>
-
-    </form>
-
-  </section>
-)}
-
-
-{/* Farmer Dashboard */}
-{user && user.role === "farmer" && (
-  <section className="farmer-dashboard" id="farmer-dashboard">
-
-    <div className="section-heading">
-      <div>
-        <h2>Farmer Dashboard</h2>
-        <p>Manage your customer orders</p>
-      </div>
-    </div>
-
-    {farmerOrders.length === 0 ? (
-      <p>No customer orders found.</p>
-    ) : (
-      <div className="orders-list">
-
-        {farmerOrders.map((order) => (
-          <div className="order-card" key={order._id}>
-
-            <h3>
-              {order.product?.name || "Product"}
-            </h3>
-
-            <p>
-              Buyer: {order.buyer?.name || "Customer"}
-            </p>
-
-            <p>
-              Quantity: {order.quantity}{" "}
-              {order.product?.unit || ""}
-            </p>
-
-            <p>
-              Total Price: ₹{order.totalPrice}
-            </p>
-
-            <p className="order-status">
-              Status:
-              <span
-                className={`status-badge ${order.status.toLowerCase()}`}
+              <form
+                className="product-form"
+                onSubmit={handleAddProduct}
               >
-                {order.status}
-              </span>
-            </p>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Product name"
+                  required
+                />
 
-                    {order.status === "Pending" && (
-                    <button
-                    onClick={() =>
-                    handleUpdateOrderStatus(order._id, "Confirmed")
-                    }
-                 >
-                  Confirm Order
-                   </button>
-                  )}
+                <select
+                  name="category"
+                  defaultValue="Vegetables"
+                  required
+                >
+                  <option value="Vegetables">
+                    Vegetables
+                  </option>
 
-           {order.status === "Confirmed" && (
-           <button
-           onClick={() =>
-      handleUpdateOrderStatus(order._id, "Delivered")
-    }
-  >
-    Mark as Delivered
-  </button>
-)}
-          </div>
-        ))}
+                  <option value="Fruits">
+                    Fruits
+                  </option>
 
-      </div>
-    )}
+                  <option value="Grains">
+                    Grains
+                  </option>
 
-  </section>
-)}
+                  <option value="Dairy">
+                    Dairy
+                  </option>
+                </select>
+
+                <input
+                  type="number"
+                  name="price"
+                  placeholder="Price"
+                  min="1"
+                  required
+                />
+
+                <input
+                  type="number"
+                  name="quantity"
+                  placeholder="Quantity"
+                  min="1"
+                  required
+                />
+
+                <select
+                  name="unit"
+                  defaultValue="kg"
+                  required
+                >
+                  <option value="kg">
+                    kg
+                  </option>
+
+                  <option value="quintal">
+                    Quintal
+                  </option>
+
+                  <option value="liter">
+                    Liter
+                  </option>
+
+                  <option value="piece">
+                    Piece
+                  </option>
+                </select>
+
+                <textarea
+                  name="description"
+                  placeholder="Product description"
+                  required
+                ></textarea>
+
+                <button type="submit">
+                  Add Product
+                </button>
+              </form>
+            </section>
+          )}
+
+        {/* Farmer Dashboard */}
+        {user &&
+          user.role === "farmer" && (
+            <section
+              className="farmer-dashboard"
+              id="farmer-dashboard"
+            >
+              <div className="section-heading">
+                <div>
+                  <h2>
+                    Farmer Dashboard
+                  </h2>
+
+                  <p>
+                    Manage your customer orders
+                  </p>
+                </div>
+              </div>
+
+              {farmerOrders.length === 0 ? (
+                <p>
+                  No customer orders found.
+                </p>
+              ) : (
+                <div className="orders-list">
+                  {farmerOrders.map((order) => (
+                    <div
+                      className="order-card"
+                      key={order._id}
+                    >
+                      <h3>
+                        {order.product?.name ||
+                          "Product"}
+                      </h3>
+
+                      <p>
+                        Buyer:{" "}
+                        {order.buyer?.name ||
+                          "Customer"}
+                      </p>
+
+                      <p>
+                        Quantity:{" "}
+                        {order.quantity}{" "}
+                        {order.product?.unit ||
+                          ""}
+                      </p>
+
+                      <p>
+                        Total Price: ₹
+                        {order.totalPrice}
+                      </p>
+
+                      <p className="order-status">
+                        Status:
+
+                        <span
+                          className={`status-badge ${
+                            order.status
+                              ? order.status.toLowerCase()
+                              : "pending"
+                          }`}
+                        >
+                          {order.status ||
+                            "Pending"}
+                        </span>
+                      </p>
+
+                      {order.status ===
+                        "Pending" && (
+                        <button
+                          onClick={() =>
+                            handleUpdateOrderStatus(
+                              order._id,
+                              "Confirmed"
+                            )
+                          }
+                        >
+                          Confirm Order
+                        </button>
+                      )}
+
+                      {order.status ===
+                        "Confirmed" && (
+                        <button
+                          onClick={() =>
+                            handleUpdateOrderStatus(
+                              order._id,
+                              "Delivered"
+                            )
+                          }
+                        >
+                          Mark as Delivered
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
         {/* Footer */}
         <footer>
@@ -1094,7 +1301,6 @@ const handleUpdateOrderStatus = async (orderId, status) => {
             © 2026 AgriMarket. All rights reserved.
           </p>
         </footer>
-
       </div>
     </>
   );
